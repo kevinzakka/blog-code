@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.cross_validation import cross_val_score
 from collections import Counter
 # =============================================================================================
-#											Part I
+#					Part I
 # =============================================================================================
 
 # ============================== data preprocessing ===========================================
@@ -21,7 +21,7 @@ print(df.head())
 
 # create design matrix X and target vector y
 X = np.array(df.ix[:, 0:4]) 	# end index is exclusive
-y = np.array(df['class']) 		# showing you two ways of indexing a pandas df
+y = np.array(df['class']) 	# showing you two ways of indexing a pandas df
 
 # split into train and test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
@@ -65,7 +65,7 @@ plt.xlabel('Number of Neighbors K')
 plt.ylabel('Misclassification Error')
 plt.show()
 # =============================================================================================
-#											Part II
+#					Part II
 # =============================================================================================
 # ===================================== writing our own KNN ===================================
 def train(X_train, y_train):
@@ -119,4 +119,3 @@ try:
 
 except ValueError:
 	print('Can\'t have more neighbors than training samples!!')
-
