@@ -47,7 +47,7 @@ def L(X, y, W):
 	margins = np.maximum(0, scores - correct_classes + delta)
 
 	# ignore the y-th position and only consider margin on max wrong class
-	margins[y, np.arange(2)] = 0
+	margins[y, np.arange(N)] = 0
 
 	# compute loss column-wise
 	losses = np.sum(margins, axis=0)
