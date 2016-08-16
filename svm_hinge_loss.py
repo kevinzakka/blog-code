@@ -43,11 +43,8 @@ def L(X, y, W):
 	# grab scores of correct classes
 	correct_classes = scores[y, np.arange(N)]
 
-	# vectorize squash function
-	vectorizedSquash = np.vectorize(squash, otypes=[np.float])
-
-	# compute margins element-wise
-	margins = vectorizedSquash(scores - correct_classes, delta)
+	# compute margins
+	margins = np.maximum(0, scores - correct_classes + delta)
 
 	# ignore the y-th position and only consider margin on max wrong class
 	margins[y, np.arange(2)] = 0
@@ -55,8 +52,11 @@ def L(X, y, W):
 	# compute loss column-wise
 	losses = np.sum(margins, axis=0)
 	
+	# average out the loss
+	loss = np.sum(losses) / N
+	
 	# return average loss
-	return (np.sum(losses) / N)
+	return loss
 
 
 """
