@@ -1,36 +1,43 @@
 import numpy as np
-from keras.preprocessing.image import load_img, img_to_array, array_to_img
+from PIL import Image
+import matplotlib.pyplot as plt
 
 DIMS = (400, 400)
 CAT1 = 'cat1.jpg'
 CAT2 = 'cat2.jpg'
 
-def load_data(dims, img_name, view=False):
+def load_img(img_name, desired_size=None, view=False):
 	"""
-	Util function for processing RGB image into 4D tensor.
+	Util function for loading RGB image into 4D numpy array.
 
-	Returns tensor of shape (1, H, W, C)
+	Returns array of shape (1, H, W, C)
 	"""
 	image_path = './data/' + img_name
-	img = load_img(image_path, target_size=dims)
+	img = Image.open(image_path)
+	img = img.convert('RGB')
+	if desired_size:
+		img = img.resize((desired_size[1], desired_size[0]))
 	if view:
 		img.show()
-	img = img_to_array(img)
-	img = np.expand_dims(img, axis=0)
-	img = img / 255.0
-	return img
 
-def affine_grid_generator(height, width, thetas):
+	# preprocess	
+	x = np.asarray(img, dtype='float32')
+	x = np.expand_dims(x, axis=0)
+	x /= 255.0
+
+	return x
+
+def affine_grid_generator(height, width, M):
 	"""
 	This function returns a sampling grid, which when
-	used with the bilinear sampler on the input feature 
-	map, will create an output feature map that is an 
-	affine transformation [1] of the input feature map.
+	used with the bilinear sampler on the input img,
+	will create an output img that is an affine 
+	transformation of the input.
 
 	Input
 	-----
-	- theta: affine transform matrices of shape (num_batch, 2, 3). 
-	  For each image in the batch, we have 6 theta parameters of 
+	- M: affine transform matrices of shape (num_batch, 2, 3). 
+	  For each image in the batch, we have 6 parameters of 
 	  the form (2x3) that define the affine transformation T.
 
 	Returns
@@ -39,32 +46,25 @@ def affine_grid_generator(height, width, thetas):
 	  The 4th dimension has 2 components: (x, y) which are the 
 	  sampling points of the original image for each point in the
 	  target image.
-
-	Note
-	----
-	[1]: the affine transformation allows cropping, translation, 
-		 and isotropic scaling.
 	"""
 	# grab batch size
-	num_batch = thetas.shape[0]
+	num_batch = M.shape[0]
 
 	# create normalized 2D grid
-	x = np.linspace(-1, 1, height)
-	y = np.linspace(-1, 1, width)
+	x = np.linspace(-1, 1, width)
+	y = np.linspace(-1, 1, height)
 	x_t, y_t = np.meshgrid(x, y)
 
-	# x_t = K.variable(x_t)
-	# y_t = K.variable(y_t)
-
-	# reshape to (xt, yt, 1)
+	# reshape to (xt, yt, 1) 
 	ones = np.ones(np.prod(x_t.shape))
 	sampling_grid = np.vstack([x_t.flatten(), y_t.flatten(), ones])
+	# homogeneous coordinates
 
 	# repeat grid num_batch times
 	sampling_grid = np.resize(sampling_grid, (num_batch, 3, height*width))
 	
 	# transform the sampling grid - batch multiply
-	batch_grids = np.matmul(thetas, sampling_grid)
+	batch_grids = np.matmul(M, sampling_grid)
 	# batch grid has shape (num_batch, 2, H*W)
 
 	# reshape to (num_batch, H, W, 2)
@@ -72,7 +72,7 @@ def affine_grid_generator(height, width, thetas):
 	batch_grids = np.moveaxis(batch_grids, 1, -1)
 
 	# sanity check
-	print("Thetas: {}".format(thetas.shape))
+	print("Transformation Matrices: {}".format(M.shape))
 	print("Sampling Grid: {}".format(sampling_grid.shape))
 	print("Batch Grids: {}".format(batch_grids.shape))
 
@@ -96,7 +96,6 @@ def bilinear_sampler(input_img, x, y):
 	Returns
 	-------
 	- interpolated images according to grids. Same size as grid.
-
 	"""
 	# grab dimensions
 	B, H, W, C = input_img.shape
@@ -107,9 +106,11 @@ def bilinear_sampler(input_img, x, y):
 
 	# grab 4 nearest corner points for each (x_i, y_i)
 	x0 = np.floor(x).astype(np.int64)
-	x1 = x0 + 1
+	x1 = np.ceil(x).astype(np.int64)
+	# x1 = x0 + 1
 	y0 = np.floor(y).astype(np.int64)
-	y1 = y0 + 1
+	# y1 = y0 + 1
+	y1 = np.ceil(y).astype(np.int64)
 
 	# make sure it's inside img range [0, H] or [0, W]
 	x0 = np.clip(x0, 0, W-1)
@@ -143,8 +144,8 @@ def bilinear_sampler(input_img, x, y):
 def main():
 
 	# load 4 cat images
-	img1 = load_data(DIMS, CAT1, view=True)
-	img2 = load_data(DIMS, CAT2)
+	img1 = load_img(CAT1, DIMS)
+	img2 = load_img(CAT2, DIMS)
 
 	# concat into tensor of shape (2, 400, 400, 3)
 	input_img = np.concatenate([img1, img2], axis=0)
@@ -156,21 +157,21 @@ def main():
 	B, H, W, C = input_img.shape
 
 	# initialize theta to identity transform
-	theta = np.array([[0.707, -0.707, 0.], [0.707, 0.707, 0.]])
+	M = np.array([[1., 0., 0.], [0., 1., 0.]])
 
 	# repeat num_batch times
-	theta = np.resize(theta, (B, 2, 3))
+	M = np.resize(M, (B, 2, 3))
 
 	# get grids
-	batch_grids = affine_grid_generator(H, W, theta)
+	batch_grids = affine_grid_generator(H, W, M)
 
 	x_s = batch_grids[:, :, :, 0:1].squeeze()
 	y_s = batch_grids[:, :, :, 1:2].squeeze()
 
 	out = bilinear_sampler(input_img, x_s, y_s)
 
-	img_out = array_to_img(out[0])
-	img_out.show()
+	plt.imshow(out[1])
+	plt.show()
 
 if __name__ == '__main__':
 	main()
