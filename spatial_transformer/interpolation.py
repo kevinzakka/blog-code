@@ -85,7 +85,7 @@ def bilinear_sampler(input_img, x, y):
 	the sampling is done identically for each channel of the input.
 
 	To test if the function works properly, output image should be
-	identical to input image when theta is initialized to identity
+	identical to input image when M is initialized to identity
 	transform.
 
 	Input
