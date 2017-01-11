@@ -156,7 +156,7 @@ def main():
 	# grab shape
 	B, H, W, C = input_img.shape
 
-	# initialize theta to identity transform
+	# initialize transformation matrix M to identity transform
 	M = np.array([[1., 0., 0.], [0., 1., 0.]])
 
 	# repeat num_batch times
