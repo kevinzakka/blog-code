@@ -1,31 +1,10 @@
 import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
+from utils import img_to_array, array_to_img
 
 DIMS = (400, 400)
 CAT1 = 'cat1.jpg'
-CAT2 = 'cat2.jpg'
-
-def load_img(img_name, desired_size=None, view=False):
-	"""
-	Util function for loading RGB image into 4D numpy array.
-
-	Returns array of shape (1, H, W, C)
-	"""
-	image_path = './data/' + img_name
-	img = Image.open(image_path)
-	img = img.convert('RGB')
-	if desired_size:
-		img = img.resize((desired_size[1], desired_size[0]))
-	if view:
-		img.show()
-
-	# preprocess	
-	x = np.asarray(img, dtype='float32')
-	x = np.expand_dims(x, axis=0)
-	x /= 255.0
-
-	return x
+CAT2 = 'cat3.jpg'
+data_path = './data/'
 
 def affine_grid_generator(height, width, M):
 	"""
@@ -85,7 +64,7 @@ def bilinear_sampler(input_img, x, y):
 	the sampling is done identically for each channel of the input.
 
 	To test if the function works properly, output image should be
-	identical to input image when M is initialized to identity
+	identical to input image when theta is initialized to identity
 	transform.
 
 	Input
@@ -106,11 +85,9 @@ def bilinear_sampler(input_img, x, y):
 
 	# grab 4 nearest corner points for each (x_i, y_i)
 	x0 = np.floor(x).astype(np.int64)
-	x1 = np.ceil(x).astype(np.int64)
-	# x1 = x0 + 1
+	x1 = x0 + 1
 	y0 = np.floor(y).astype(np.int64)
-	# y1 = y0 + 1
-	y1 = np.ceil(y).astype(np.int64)
+	y1 = y0 + 1
 
 	# make sure it's inside img range [0, H] or [0, W]
 	x0 = np.clip(x0, 0, W-1)
@@ -144,8 +121,8 @@ def bilinear_sampler(input_img, x, y):
 def main():
 
 	# load 4 cat images
-	img1 = load_img(CAT1, DIMS)
-	img2 = load_img(CAT2, DIMS)
+	img1 = img_to_array(data_path + CAT1, DIMS)
+	img2 = img_to_array(data_path + CAT2, DIMS, view=True)
 
 	# concat into tensor of shape (2, 400, 400, 3)
 	input_img = np.concatenate([img1, img2], axis=0)
@@ -156,7 +133,7 @@ def main():
 	# grab shape
 	B, H, W, C = input_img.shape
 
-	# initialize transformation matrix M to identity transform
+	# initialize theta to identity transform
 	M = np.array([[1., 0., 0.], [0., 1., 0.]])
 
 	# repeat num_batch times
@@ -170,8 +147,9 @@ def main():
 
 	out = bilinear_sampler(input_img, x_s, y_s)
 
-	plt.imshow(out[1])
-	plt.show()
+	# view the 2nd image
+	out = array_to_img(out[-1])
+	out.show()
 
 if __name__ == '__main__':
 	main()
