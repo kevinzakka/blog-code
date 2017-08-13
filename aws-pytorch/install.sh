@@ -1,3 +1,8 @@
+######################################################################
+# Driver part is based off Michael Dietz's gist which you can view @
+# https://gist.github.com/mjdietzx/fda9535e3246f0db39b0da80403265d1
+######################################################################
+
 # drivers
 wget http://us.download.nvidia.com/tesla/375.51/nvidia-driver-local-repo-ubuntu1604_375.51-1_amd64.deb
 sudo dpkg -i nvidia-driver-local-repo-ubuntu1604_375.51-1_amd64.deb
