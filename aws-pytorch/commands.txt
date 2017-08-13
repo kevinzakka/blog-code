@@ -1,0 +1,7 @@
+2 important commands
+
+# ssh into an instance
+ssh -v -i <path to pem file> ubuntu@<Public DNS>
+
+# copy file from local computer to instance
+scp -i <path to pem file> -r <path to local file (sh)> ubuntu@<Public DNS>:<path to destination on aws instance>
