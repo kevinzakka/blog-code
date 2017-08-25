@@ -11,8 +11,8 @@ sudo apt-get -y install cuda-drivers
 sudo apt-get update && sudo apt-get -y upgrade
 
 # python3 misc
-sudo apt-get install python3-tk
-sudo apt-get install python3-pip
+sudo apt-get --assume-yes install python3-tk
+sudo apt-get --assume-yes install python3-pip
 sudo pip3 install --upgrade pip
 sudo pip3 install virtualenv numpy scipy matplotlib
 
