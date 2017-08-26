@@ -76,13 +76,13 @@ def view_images(X, ubound=1.0, save=False, name=''):
         grid = grid.reshape((H, W))
         plt.imshow(grid, cmap="Greys_r")
         if save:
-            plt.savefig('/Users/kevin/Desktop/' + name, format='png', dpi=1000)
+            plt.savefig('./' + name + '.png', format='png', dpi=1000)
         plt.show()
     elif X.ndim == 4:
         grid = visualize_grid(X, ubound)
         plt.imshow(grid)
         if save:
-            plt.savefig('/Users/kevin/Desktop/' + name, format='png', dpi=1000)
+            plt.savefig('./' + name + '.png', format='png', dpi=1000)
         plt.show()
     else:
         raise ValueError
